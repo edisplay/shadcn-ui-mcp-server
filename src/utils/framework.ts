@@ -15,8 +15,12 @@ import { logInfo, logWarning } from "./logger.js";
 // Framework types
 export type Framework = "react" | "svelte" | "vue" | "react-native";
 
+// UI library types (React-only: Radix vs Base UI)
+export type UiLibrary = "radix" | "base";
+
 // Default framework
 const DEFAULT_FRAMEWORK: Framework = "react";
+const DEFAULT_UI_LIBRARY: UiLibrary = "radix";
 
 /**
  * Get the current framework from environment or command line arguments
@@ -61,6 +65,34 @@ export function getFramework(): Framework {
   // Return default
   logInfo(`Using default framework: '${DEFAULT_FRAMEWORK}'`);
   return DEFAULT_FRAMEWORK;
+}
+
+export function getUiLibrary(): UiLibrary {
+  const framework = getFramework();
+  if (framework !== "react") {
+    return DEFAULT_UI_LIBRARY;
+  }
+
+  const args = process.argv.slice(2);
+  const idx = args.findIndex((arg) => arg === "--ui-library");
+
+  if (idx !== -1 && args[idx + 1]) {
+    const lib = args[idx + 1].toLowerCase();
+    if (lib === "radix" || lib === "base") {
+      logInfo(`UI library set to '${lib}' via command line argument`);
+      return lib;
+    }
+    logWarning(`Invalid UI library '${lib}'. Using default '${DEFAULT_UI_LIBRARY}'`);
+  }
+
+  const envLib = process.env.UI_LIBRARY?.toLowerCase();
+  if (envLib === "radix" || envLib === "base") {
+    logInfo(`UI library set to '${envLib}' via environment variable`);
+    return envLib;
+  }
+
+  logInfo(`Using default UI library: '${DEFAULT_UI_LIBRARY}'`);
+  return DEFAULT_UI_LIBRARY;
 }
 
 /**
@@ -132,6 +164,11 @@ export function validateFrameworkSelection() {
   logInfo(`Repository: ${info.repository}`);
   logInfo(`File extension: ${info.fileExtension}`);
   logInfo(`Description: ${info.description}`);
+
+  if (framework === "react") {
+    const uiLibrary = getUiLibrary();
+    logInfo(`UI library: ${uiLibrary} (${uiLibrary === 'base' ? 'Base UI' : 'Radix UI'})`);
+  }
 
   // Provide helpful information about switching frameworks
   if (framework === "react") {
