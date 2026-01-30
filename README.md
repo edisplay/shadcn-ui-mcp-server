@@ -38,6 +38,19 @@ npx @jpisnice/shadcn-ui-mcp-server --framework react-native
 
 **🎯 Get your GitHub token in 2 minutes**: [docs/getting-started/github-token.md](docs/getting-started/github-token.md)
 
+## 📦 One-Click Installation (Claude Desktop)
+
+Download and double-click the `.mcpb` file for instant installation:
+
+1. Download `shadcn-ui-mcp-server.mcpb` from [Releases](https://github.com/Jpisnice/shadcn-ui-mcp-server/releases)
+2. Double-click the file - Claude Desktop opens automatically
+3. Enter your GitHub token (optional, for higher rate limits)
+4. Click Install - tools are available immediately
+
+**Manual install:** Claude Desktop → Settings → MCP → Add Server → Browse → Select `.mcpb` file
+
+> **References:** [Anthropic Desktop Extensions](https://www.anthropic.com/engineering/desktop-extensions) | [Building MCPB](https://support.claude.com/en/articles/12922929-building-desktop-extensions-with-mcpb)
+
 ## 🌐 SSE Transport & Docker Deployment
 
 Run the server with **Server-Sent Events (SSE)** transport for multi-client support and production deployments:
@@ -127,11 +140,38 @@ npx @jpisnice/shadcn-ui-mcp-server --framework react-native
 ```
 
 ### 3. Integrate with Your Editor
-- **Claude Code**: SSE transport integration (see above)
+- **Claude Code**: See [Claude Code Integration](#-claude-code-integration) below
 - **VS Code**: [docs/integration/vscode.md](docs/integration/vscode.md)
 - **Cursor**: [docs/integration/cursor.md](docs/integration/cursor.md)
 - **Claude Desktop**: [docs/integration/claude-desktop.md](docs/integration/claude-desktop.md)
 - **Continue.dev**: [docs/integration/continue.md](docs/integration/continue.md)
+
+## 💻 Claude Code Integration
+
+### Quick Add (CLI)
+
+```bash
+# Add the shadcn-ui MCP server
+claude mcp add shadcn -- bunx -y @jpisnice/shadcn-ui-mcp-server --github-api-key YOUR_TOKEN
+```
+
+### SSE Transport
+
+For production deployments with SSE transport:
+
+```bash
+# Start server in SSE mode
+node build/index.js --mode sse --port 7423
+
+# Connect with Claude Code
+claude mcp add --scope user --transport sse shadcn-mcp-server http://localhost:7423/sse
+```
+
+### Framework-Specific Commands
+
+See [Claude Code Integration Guide](docs/integration/claude-code.md) for framework-specific commands (React, Svelte, Vue, React Native).
+
+> **Reference:** [Claude Code MCP Documentation](https://code.claude.com/docs/en/mcp)
 
 ## 🎯 Use Cases
 
@@ -152,6 +192,46 @@ npm install -g @jpisnice/shadcn-ui-mcp-server
 # Or use npx (recommended)
 npx @jpisnice/shadcn-ui-mcp-server
 ```
+
+## 🔨 Building from Source
+
+### Prerequisites
+
+- Node.js >= 18.0.0
+- npm or pnpm
+
+### Build Steps
+
+```bash
+# Clone the repository
+git clone https://github.com/Jpisnice/shadcn-ui-mcp-server.git
+cd shadcn-ui-mcp-server
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run the server
+node build/index.js --github-api-key YOUR_TOKEN
+```
+
+### Run Locally
+
+```bash
+# After building, run with options
+node build/index.js --github-api-key YOUR_TOKEN
+node build/index.js --framework svelte
+```
+
+### Building MCPB Package
+
+The project includes a `manifest.json` following the [MCPB specification](https://github.com/modelcontextprotocol/mcpb). The `.mcpb` file is a ZIP archive containing the server, dependencies, and configuration.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed packaging instructions.
+
+> **Reference:** [Building Desktop Extensions with MCPB](https://support.claude.com/en/articles/12922929-building-desktop-extensions-with-mcpb)
 
 ## 🔗 Quick Links
 
