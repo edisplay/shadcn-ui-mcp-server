@@ -186,6 +186,14 @@ export function validateFrameworkSelection() {
   if (framework === "react") {
     const uiLibrary = getUiLibrary();
     logInfo(`UI library: ${uiLibrary} (${uiLibrary === 'base' ? 'Base UI' : 'Radix UI'})`);
+  } else {
+    // Warn if UI_LIBRARY specified for non-React framework
+    const envLib = process.env.UI_LIBRARY;
+    const args = process.argv.slice(2);
+    const argLib = args.includes("--ui-library");
+    if (envLib || argLib) {
+      logWarning(`UI_LIBRARY is only supported for React. Ignoring for ${framework}.`);
+    }
   }
 
   // Provide helpful information about switching frameworks
