@@ -102,7 +102,12 @@ echo "✅ Testing React Native framework startup..."
 FRAMEWORK=react-native node ./build/index.js --help > /dev/null
 echo "   RN framework help works!"
 
-# Test 9: Security audit
+# Test 9: Base UI library flag
+echo "✅ Testing Base UI library flag..."
+node ./build/index.js --ui-library base --help > /dev/null
+echo "   --ui-library base works!"
+
+# Test 10: Security audit
 echo "✅ Running security audit..."
 if npm audit --audit-level=moderate > /dev/null 2>&1; then
     echo "   Security audit passed!"
@@ -110,7 +115,7 @@ else
     echo "   ⚠️  Security audit found issues - run 'npm audit' for details"
 fi
 
-# Test 10: License compliance check
+# Test 11: License compliance check
 echo "✅ Checking license compliance..."
 if command -v license-checker > /dev/null 2>&1; then
     if license-checker --summary > /dev/null 2>&1; then
@@ -122,7 +127,7 @@ else
     echo "   ℹ️  license-checker not available - skipping license check"
 fi
 
-# Test 11: Bundle size check
+# Test 12: Bundle size check
 echo "✅ Checking bundle size..."
 if [[ -f "build/index.js" ]]; then
     SIZE=$(wc -c < build/index.js)
