@@ -22,11 +22,17 @@ export type UiLibrary = "radix" | "base";
 const DEFAULT_FRAMEWORK: Framework = "react";
 const DEFAULT_UI_LIBRARY: UiLibrary = "radix";
 
+// Cache for memoization
+let cachedFramework: Framework | null = null;
+let cachedUiLibrary: UiLibrary | null = null;
+
 /**
  * Get the current framework from environment or command line arguments
  * @returns The selected framework ('react' or 'svelte' or 'vue')
  */
 export function getFramework(): Framework {
+  if (cachedFramework !== null) return cachedFramework;
+
   // Check command line arguments first
   const args = process.argv.slice(2);
   const frameworkIndex = args.findIndex(
@@ -42,6 +48,7 @@ export function getFramework(): Framework {
       framework === "react-native"
     ) {
       logInfo(`Framework set to '${framework}' via command line argument`);
+      cachedFramework = framework;
       return framework;
     } else {
       logWarning(
@@ -59,39 +66,50 @@ export function getFramework(): Framework {
     envFramework === "react-native"
   ) {
     logInfo(`Framework set to '${envFramework}' via environment variable`);
+    cachedFramework = envFramework;
     return envFramework;
   }
 
   // Return default
   logInfo(`Using default framework: '${DEFAULT_FRAMEWORK}'`);
+  cachedFramework = DEFAULT_FRAMEWORK;
   return DEFAULT_FRAMEWORK;
 }
 
 export function getUiLibrary(): UiLibrary {
+  if (cachedUiLibrary !== null) return cachedUiLibrary;
+
   const framework = getFramework();
+  const args = process.argv.slice(2);
+  const idx = args.findIndex((arg) => arg === "--ui-library");
+  const argLib = idx !== -1 ? args[idx + 1]?.toLowerCase() : null;
+  const envLib = process.env.UI_LIBRARY?.toLowerCase();
+  const requestedLib = argLib || envLib;
+
   if (framework !== "react") {
+    if (requestedLib) {
+      logWarning(`--ui-library is only supported for React. Ignoring '${requestedLib}' for ${framework}.`);
+    }
+    cachedUiLibrary = DEFAULT_UI_LIBRARY;
     return DEFAULT_UI_LIBRARY;
   }
 
-  const args = process.argv.slice(2);
-  const idx = args.findIndex((arg) => arg === "--ui-library");
-
-  if (idx !== -1 && args[idx + 1]) {
-    const lib = args[idx + 1].toLowerCase();
-    if (lib === "radix" || lib === "base") {
-      logInfo(`UI library set to '${lib}' via command line argument`);
-      return lib;
-    }
-    logWarning(`Invalid UI library '${lib}'. Using default '${DEFAULT_UI_LIBRARY}'`);
+  if (argLib === "radix" || argLib === "base") {
+    logInfo(`UI library set to '${argLib}' via command line argument`);
+    cachedUiLibrary = argLib;
+    return argLib;
+  } else if (argLib) {
+    logWarning(`Invalid UI library '${argLib}'. Using default '${DEFAULT_UI_LIBRARY}'`);
   }
 
-  const envLib = process.env.UI_LIBRARY?.toLowerCase();
   if (envLib === "radix" || envLib === "base") {
     logInfo(`UI library set to '${envLib}' via environment variable`);
+    cachedUiLibrary = envLib;
     return envLib;
   }
 
   logInfo(`Using default UI library: '${DEFAULT_UI_LIBRARY}'`);
+  cachedUiLibrary = DEFAULT_UI_LIBRARY;
   return DEFAULT_UI_LIBRARY;
 }
 

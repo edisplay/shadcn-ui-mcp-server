@@ -205,27 +205,55 @@ function getFallbackComponents(): string[] {
 function getFallbackComponentsBase(): string[] {
     return [
         'accordion',
+        'alert',
         'alert-dialog',
+        'aspect-ratio',
+        'avatar',
+        'badge',
+        'breadcrumb',
+        'button',
+        'button-group',
+        'calendar',
+        'card',
+        'carousel',
+        'chart',
         'checkbox',
-        'checkbox-group',
         'collapsible',
+        'combobox',
+        'command',
+        'context-menu',
         'dialog',
+        'drawer',
+        'dropdown-menu',
+        'empty',
         'field',
-        'fieldset',
-        'form',
+        'hover-card',
         'input',
-        'menu',
-        'number-field',
+        'input-group',
+        'input-otp',
+        'kbd',
+        'label',
+        'menubar',
+        'native-select',
+        'navigation-menu',
+        'pagination',
         'popover',
-        'preview-card',
         'progress',
         'radio-group',
+        'resizable',
         'scroll-area',
         'select',
         'separator',
+        'sheet',
+        'sidebar',
+        'skeleton',
         'slider',
+        'sonner',
+        'spinner',
         'switch',
+        'table',
         'tabs',
+        'textarea',
         'toggle',
         'toggle-group',
         'tooltip'
@@ -608,8 +636,14 @@ async function getBlockCode(blockName: string, includeComponents: boolean = true
                     usage: `Import and use directly in your application:\n\nimport { ${blockName.charAt(0).toUpperCase() + blockName.slice(1).replace(/-/g, '')} } from './blocks/${blockName}'`
                 };
             }
-        } catch (error) {
-            // Continue to check for complex block directory
+        } catch (error: any) {
+            // Only continue to complex block check on 404
+            const status = error.response?.status;
+            if (status && status !== 404) {
+                logError(`Error fetching simple block ${blockName}`, error);
+                throw error;
+            }
+            // 404 or no response - continue to check for complex block directory
         }
         
         // Check if it's a complex block directory
