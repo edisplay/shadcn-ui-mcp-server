@@ -34,6 +34,9 @@ npx @jpisnice/shadcn-ui-mcp-server --github-api-key ghp_your_token_here
 npx @jpisnice/shadcn-ui-mcp-server --framework svelte
 npx @jpisnice/shadcn-ui-mcp-server --framework vue
 npx @jpisnice/shadcn-ui-mcp-server --framework react-native
+
+# Use Base UI instead of Radix (React only)
+npx @jpisnice/shadcn-ui-mcp-server --ui-library base
 ```
 
 **🎯 Get your GitHub token in 2 minutes**: [docs/getting-started/github-token.md](docs/getting-started/github-token.md)
@@ -91,6 +94,7 @@ curl http://localhost:7423/health
 - `MCP_HOST` - Host binding (default: 0.0.0.0)
 - `MCP_CORS_ORIGINS` - CORS origins (comma-separated)
 - `GITHUB_PERSONAL_ACCESS_TOKEN` - GitHub API token
+- `UI_LIBRARY` - UI primitive library: `radix` (default) or `base` (React only)
 
 ## 📚 Documentation
 
@@ -114,6 +118,28 @@ This MCP server supports four popular shadcn implementations:
 | **Svelte** | [shadcn-svelte](https://www.shadcn-svelte.com/) | [huntabyte](https://github.com/huntabyte) | Svelte components from shadcn-svelte |
 | **Vue** | [shadcn-vue](https://www.shadcn-vue.com/) | [unovue](https://github.com/unovue) | Vue components from shadcn-vue |
 | **React Native** | [react-native-reusables](https://github.com/founded-labs/react-native-reusables) | [Founded Labs](https://github.com/founded-labs) | React Native components from react-native-reusables |
+
+### UI Library (React only)
+
+shadcn/ui v4 supports two primitive libraries for React: **Radix UI** (default) and **Base UI**.
+
+```bash
+# Radix UI (default)
+npx @jpisnice/shadcn-ui-mcp-server --framework react --ui-library radix
+
+# Base UI
+npx @jpisnice/shadcn-ui-mcp-server --framework react --ui-library base
+
+# Or via environment variable
+UI_LIBRARY=base npx @jpisnice/shadcn-ui-mcp-server
+```
+
+Claude Desktop config example:
+```json
+{
+  "args": ["--framework", "react", "--ui-library", "base"]
+}
+```
 
 ## 🛠️ Essential Setup
 

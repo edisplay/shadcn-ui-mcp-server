@@ -1,5 +1,6 @@
 import { Axios } from "axios";
 import { logError, logWarning, logInfo } from './logger.js';
+import { getUiLibrary } from './framework.js';
 
 // Constants for the v4 repository structure
 const REPO_OWNER = 'shadcn-ui';
@@ -8,6 +9,15 @@ const REPO_BRANCH = 'main';
 const V4_BASE_PATH = 'apps/v4';
 const REGISTRY_PATH = `${V4_BASE_PATH}/registry`;
 const NEW_YORK_V4_PATH = `${REGISTRY_PATH}/new-york-v4`;
+const BASE_UI_PATH = `${REGISTRY_PATH}/bases/base`;
+
+function getRegistryBasePath(): string {
+    return getUiLibrary() === 'base' ? BASE_UI_PATH : NEW_YORK_V4_PATH;
+}
+
+function getDemoSuffix(): string {
+    return getUiLibrary() === 'base' ? 'example' : 'demo';
+}
 
 // GitHub API for accessing repository structure and metadata
 const githubApi = new Axios({
@@ -46,7 +56,8 @@ const githubRaw = new Axios({
  * @returns Promise with component source code
  */
 async function getComponentSource(componentName: string): Promise<string> {
-    const componentPath = `${NEW_YORK_V4_PATH}/ui/${componentName.toLowerCase()}.tsx`;
+    const basePath = getRegistryBasePath();
+    const componentPath = `${basePath}/ui/${componentName.toLowerCase()}.tsx`;
     
     try {
         const response = await githubRaw.get(`/${componentPath}`);
@@ -62,7 +73,9 @@ async function getComponentSource(componentName: string): Promise<string> {
  * @returns Promise with component demo code
  */
 async function getComponentDemo(componentName: string): Promise<string> {
-    const demoPath = `${NEW_YORK_V4_PATH}/examples/${componentName.toLowerCase()}-demo.tsx`;
+    const basePath = getRegistryBasePath();
+    const suffix = getDemoSuffix();
+    const demoPath = `${basePath}/examples/${componentName.toLowerCase()}-${suffix}.tsx`;
     
     try {
         const response = await githubRaw.get(`/${demoPath}`);
@@ -77,9 +90,10 @@ async function getComponentDemo(componentName: string): Promise<string> {
  * @returns Promise with list of component names
  */
 async function getAvailableComponents(): Promise<string[]> {
+    const basePath = getRegistryBasePath();
     try {
         // First try the GitHub API
-        const response = await githubApi.get(`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${NEW_YORK_V4_PATH}/ui`);
+        const response = await githubApi.get(`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${basePath}/ui`);
         
         if (!response.data || !Array.isArray(response.data)) {
             throw new Error('Invalid response from GitHub API');
@@ -105,7 +119,7 @@ async function getAvailableComponents(): Promise<string[]> {
             if (status === 403 && message.includes('rate limit')) {
                 throw new Error(`GitHub API rate limit exceeded. Please set GITHUB_PERSONAL_ACCESS_TOKEN environment variable for higher limits. Error: ${message}`);
             } else if (status === 404) {
-                throw new Error(`Components directory not found. The path ${NEW_YORK_V4_PATH}/ui may not exist in the repository.`);
+                throw new Error(`Components directory not found. The path ${basePath}/ui may not exist in the repository.`);
             } else if (status === 401) {
                 throw new Error(`Authentication failed. Please check your GITHUB_PERSONAL_ACCESS_TOKEN if provided.`);
             } else {
@@ -120,7 +134,7 @@ async function getAvailableComponents(): Promise<string[]> {
         
         // If all else fails, provide a fallback list of known components
         logWarning('Using fallback component list due to API issues');
-        return getFallbackComponents();
+        return getUiLibrary() === 'base' ? getFallbackComponentsBase() : getFallbackComponents();
     }
 }
 
@@ -188,6 +202,64 @@ function getFallbackComponents(): string[] {
     ];
 }
 
+function getFallbackComponentsBase(): string[] {
+    return [
+        'accordion',
+        'alert',
+        'alert-dialog',
+        'aspect-ratio',
+        'avatar',
+        'badge',
+        'breadcrumb',
+        'button',
+        'button-group',
+        'calendar',
+        'card',
+        'carousel',
+        'chart',
+        'checkbox',
+        'collapsible',
+        'combobox',
+        'command',
+        'context-menu',
+        'dialog',
+        'drawer',
+        'dropdown-menu',
+        'empty',
+        'field',
+        'hover-card',
+        'input',
+        'input-group',
+        'input-otp',
+        'kbd',
+        'label',
+        'menubar',
+        'native-select',
+        'navigation-menu',
+        'pagination',
+        'popover',
+        'progress',
+        'radio-group',
+        'resizable',
+        'scroll-area',
+        'select',
+        'separator',
+        'sheet',
+        'sidebar',
+        'skeleton',
+        'slider',
+        'sonner',
+        'spinner',
+        'switch',
+        'table',
+        'tabs',
+        'textarea',
+        'toggle',
+        'toggle-group',
+        'tooltip'
+    ];
+}
+
 /**
  * Fetch component metadata from the registry
  * @param componentName Name of the component
@@ -195,7 +267,10 @@ function getFallbackComponents(): string[] {
  */
 async function getComponentMetadata(componentName: string): Promise<any> {
     try {
-        const response = await githubRaw.get(`/${REGISTRY_PATH}/registry-ui.ts`);
+        const registryFile = getUiLibrary() === 'base'
+            ? `${BASE_UI_PATH}/ui/_registry.ts`
+            : `${REGISTRY_PATH}/registry-ui.ts`;
+        const response = await githubRaw.get(`/${registryFile}`);
         const registryContent = response.data;
         
         // Parse component metadata using a more robust approach
@@ -241,7 +316,7 @@ async function getComponentMetadata(componentName: string): Promise<any> {
 async function buildDirectoryTree(
     owner: string = REPO_OWNER,
     repo: string = REPO_NAME,
-    path: string = NEW_YORK_V4_PATH,
+    path: string = getRegistryBasePath(),
     branch: string = REPO_BRANCH
 ): Promise<any> {
     try {
@@ -356,30 +431,31 @@ async function buildDirectoryTree(
  * This is used as a fallback when API rate limits are hit
  */
 function getBasicV4Structure(): any {
+    const basePath = getRegistryBasePath();
     return {
-        path: NEW_YORK_V4_PATH,
+        path: basePath,
         type: 'directory',
         note: 'Basic structure provided due to API limitations',
         children: {
             'ui': {
-                path: `${NEW_YORK_V4_PATH}/ui`,
+                path: `${basePath}/ui`,
                 type: 'directory',
                 description: 'Contains all v4 UI components',
                 note: 'Component files (.tsx) are located here'
             },
             'examples': {
-                path: `${NEW_YORK_V4_PATH}/examples`,
-                type: 'directory', 
+                path: `${basePath}/examples`,
+                type: 'directory',
                 description: 'Contains component demo examples',
                 note: 'Demo files showing component usage'
             },
             'hooks': {
-                path: `${NEW_YORK_V4_PATH}/hooks`,
+                path: `${basePath}/hooks`,
                 type: 'directory',
                 description: 'Contains custom React hooks'
             },
             'lib': {
-                path: `${NEW_YORK_V4_PATH}/lib`,
+                path: `${basePath}/lib`,
                 type: 'directory',
                 description: 'Contains utility libraries and functions'
             }
@@ -512,18 +588,17 @@ function generateComplexBlockUsage(blockName: string, structure: any[]): string 
 async function buildDirectoryTreeWithFallback(
     owner: string = REPO_OWNER,
     repo: string = REPO_NAME,
-    path: string = NEW_YORK_V4_PATH,
+    path: string = getRegistryBasePath(),
     branch: string = REPO_BRANCH
 ): Promise<any> {
     try {
         return await buildDirectoryTree(owner, repo, path, branch);
     } catch (error: any) {
-        // If it's a rate limit error and we're asking for the default v4 path, provide fallback
-        if (error.message && error.message.includes('rate limit') && path === NEW_YORK_V4_PATH) {
-                    logWarning('Using fallback directory structure due to rate limit');
-        return getBasicV4Structure();
+        const basePath = getRegistryBasePath();
+        if (error.message && error.message.includes('rate limit') && path === basePath) {
+            logWarning('Using fallback directory structure due to rate limit');
+            return getBasicV4Structure();
         }
-        // Re-throw other errors
         throw error;
     }
 }
@@ -535,7 +610,7 @@ async function buildDirectoryTreeWithFallback(
  * @returns Promise with block code and structure
  */
 async function getBlockCode(blockName: string, includeComponents: boolean = true): Promise<any> {
-    const blocksPath = `${NEW_YORK_V4_PATH}/blocks`;
+    const blocksPath = `${getRegistryBasePath()}/blocks`;
     
     try {
         // First, check if it's a simple block file (.tsx)
@@ -561,8 +636,14 @@ async function getBlockCode(blockName: string, includeComponents: boolean = true
                     usage: `Import and use directly in your application:\n\nimport { ${blockName.charAt(0).toUpperCase() + blockName.slice(1).replace(/-/g, '')} } from './blocks/${blockName}'`
                 };
             }
-        } catch (error) {
-            // Continue to check for complex block directory
+        } catch (error: any) {
+            // Only continue to complex block check on 404
+            const status = error.response?.status;
+            if (status && status !== 404) {
+                logError(`Error fetching simple block ${blockName}`, error);
+                throw error;
+            }
+            // 404 or no response - continue to check for complex block directory
         }
         
         // Check if it's a complex block directory
@@ -694,7 +775,7 @@ async function getBlockCode(blockName: string, includeComponents: boolean = true
  * @returns Promise with categorized block list
  */
 async function getAvailableBlocks(category?: string): Promise<any> {
-    const blocksPath = `${NEW_YORK_V4_PATH}/blocks`;
+    const blocksPath = `${getRegistryBasePath()}/blocks`;
     
     try {
         const response = await githubApi.get(`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${blocksPath}?ref=${REPO_BRANCH}`);
@@ -865,6 +946,8 @@ export const axios = {
         REPO_BRANCH,
         V4_BASE_PATH,
         REGISTRY_PATH,
-        NEW_YORK_V4_PATH
+        NEW_YORK_V4_PATH,
+        BASE_UI_PATH,
+        get CURRENT_REGISTRY_PATH() { return getRegistryBasePath(); }
     }
 }
